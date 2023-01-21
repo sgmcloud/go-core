@@ -122,7 +122,7 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		rabbitmq.WithConnectionOptionsLogging,
 	)
 	if err != nil {
-		rmq.logger.Error("initializing rabbitmq connection", log.Any("dsn", rmq.dsn))
+		rmq.logger.Error("initializing rabbitmq connection", err, log.Any("dsn", rmq.dsn))
 
 		return
 	}
@@ -133,13 +133,13 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 			var msg queue.Message
 
 			if err := json.Unmarshal(d.Body, &msg); err != nil {
-				rmq.logger.Error("unmarshal message", log.Any("topic", topic), log.Any("body", string(d.Body)))
+				rmq.logger.Error("unmarshal message", err, log.Any("topic", topic), log.Any("body", string(d.Body)))
 
 				return rabbitmq.NackDiscard
 			}
 
 			if err := f(msg); err != nil {
-				rmq.logger.Error("nacked message", log.Any("topic", topic), log.Error(err))
+				rmq.logger.Error("nacked message", err, log.Any("topic", topic), log.Error(err))
 
 				return rabbitmq.NackDiscard
 			}
@@ -154,7 +154,7 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		rabbitmq.WithConsumerOptionsQueueArgs(rabbitmq.Table{"x-dead-letter-exchange": topic + ".dlx"}),
 	)
 	if err != nil {
-		rmq.logger.Error("initializing rabbitmq consumer", log.Any("queue", topic))
+		rmq.logger.Error("initializing rabbitmq consumer", err, log.Any("queue", topic))
 
 		return
 	}
